@@ -15,13 +15,32 @@ export type BlogPostRow = {
   meta_description: string | null;
 };
 
-let client: SupabaseClient<{ blog_posts: BlogPostRow }> | null = null;
+/** Minimal type for Supabase client so .insert() and .update() are typed. */
+export type BlogPostInsert = Pick<
+  BlogPostRow,
+  "title" | "slug" | "body" | "excerpt" | "status" | "published_at"
+> & Partial<Pick<BlogPostRow, "cover_image_url" | "meta_title" | "meta_description">>;
+export type BlogPostUpdate = Partial<BlogPostInsert>;
+
+export type Database = {
+  public: {
+    Tables: {
+      blog_posts: {
+        Row: BlogPostRow;
+        Insert: BlogPostInsert;
+        Update: BlogPostUpdate;
+      };
+    };
+  };
+};
+
+let client: SupabaseClient<Database> | null = null;
 
 export function createClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!url || !key) return null;
   if (client) return client;
-  client = createSupabaseClient<{ blog_posts: BlogPostRow }>(url, key);
+  client = createSupabaseClient<Database>(url, key);
   return client;
 }
